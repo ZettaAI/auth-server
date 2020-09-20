@@ -17,3 +17,4 @@
 .devcontainer/
 
 test.go
+dump.rdb

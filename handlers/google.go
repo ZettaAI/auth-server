@@ -16,7 +16,6 @@ import (
 	"golang.org/x/oauth2/google"
 )
 
-// Scopes: OAuth 2.0 scopes provide a way to limit the amount of access that is granted to an access token.
 var oauthConfig = &oauth2.Config{
 	RedirectURL:  "http://localhost:8000/auth/google/callback",
 	ClientID:     os.Getenv("GOOGLE_OAUTH_CLIENT_ID"),
@@ -25,23 +24,20 @@ var oauthConfig = &oauth2.Config{
 	Endpoint:     google.Endpoint,
 }
 
-const oauthGoogleURLAPI = "https://www.googleapis.com/oauth2/v2/userinfo?access_token="
-
 // Login google oauth login handler
 func Login(c echo.Context) error {
 	// https://developers.google.com/identity/protocols/oauth2/openid-connect#server-flow
 	oauthConfig.RedirectURL = fmt.Sprintf(
 		"%v://%v/auth/google/callback", c.Scheme(), c.Request().Host)
 	url := oauthConfig.AuthCodeURL(
-		generateStateOauthCookie(c),
+		createOauthStateCookie(c),
 		oauth2.AccessTypeOffline,
 		oauth2.ApprovalForce,
 	)
-	log.Println(url)
 	return c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
-func generateStateOauthCookie(c echo.Context) string {
+func createOauthStateCookie(c echo.Context) string {
 	expiration := time.Now().Add(7 * 24 * time.Hour)
 	b := make([]byte, 16)
 	rand.Read(b)
@@ -74,7 +70,9 @@ func getUserInfo(code string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("code exchange wrong: %s", err.Error())
 	}
-	response, err := http.Get(oauthGoogleURLAPI + token.AccessToken)
+
+	response, err := http.Get(
+		"https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken)
 	if err != nil {
 		return nil, fmt.Errorf("failed getting user info: %s", err.Error())
 	}
