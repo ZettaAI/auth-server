@@ -1,10 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"net/http"
-
 	"github.com/akhileshh/auth-server/handlers"
 	"github.com/labstack/echo"
 )
@@ -21,14 +17,14 @@ import (
 func main() {
 	e := echo.New()
 
-	e.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, World!")
-	})
-	e.GET("/auth/google/login", handlers.Login)
-	e.GET("/auth/google/callback", handlers.OAuthCallback)
+	// e.GET("/", func(c echo.Context) error {
+	// 	return c.String(http.StatusOK, "Hello, World!")
+	// })
+	e.GET("/", Login)
+	e.GET("/auth/google/login", handlers.GoogleLogin)
+	e.GET("/auth/google/callback", handlers.GoogleOAuthCallback)
 
 	SetToken("a", "akhileshhalageri@gmail.com")
-	log.Println(fmt.Sprintf("a: %v", GetToken("a")))
 
 	e.Logger.Fatal(e.Start(":8000"))
 }

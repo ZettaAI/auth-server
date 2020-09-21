@@ -24,17 +24,15 @@ var oauthConfig = &oauth2.Config{
 	Endpoint:     google.Endpoint,
 }
 
-// Login google oauth login handler
-func Login(c echo.Context) error {
+// GoogleLogin google oauth login handler
+func GoogleLogin(c echo.Context) error {
 	// https://developers.google.com/identity/protocols/oauth2/openid-connect#server-flow
 	oauthConfig.RedirectURL = fmt.Sprintf(
 		"%v://%v/auth/google/callback", c.Scheme(), c.Request().Host)
-	url := oauthConfig.AuthCodeURL(
-		createOauthStateCookie(c),
-		oauth2.AccessTypeOffline,
-		oauth2.ApprovalForce,
+	return c.Redirect(
+		http.StatusTemporaryRedirect,
+		oauthConfig.AuthCodeURL(createOauthStateCookie(c)),
 	)
-	return c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
 func createOauthStateCookie(c echo.Context) string {
@@ -42,16 +40,16 @@ func createOauthStateCookie(c echo.Context) string {
 	b := make([]byte, 16)
 	rand.Read(b)
 	state := base64.URLEncoding.EncodeToString(b)
-	cookie := http.Cookie{Name: "oauthstate", Value: state, Expires: expiration}
+	cookie := http.Cookie{Name: "oAuthState", Value: state, Expires: expiration}
 	c.SetCookie(&cookie)
 	return state
 }
 
-// OAuthCallback google oauth callback handler
-func OAuthCallback(c echo.Context) error {
-	oauthState, _ := c.Cookie("oauthstate")
-	if c.FormValue("state") != oauthState.Value {
-		log.Println("Invalid google oauth state")
+// GoogleOAuthCallback google oauth callback handler
+func GoogleOAuthCallback(c echo.Context) error {
+	oAuthState, _ := c.Cookie("oAuthState")
+	if c.FormValue("state") != oAuthState.Value {
+		log.Println("Invalid google oauth state.")
 		return c.Redirect(http.StatusTemporaryRedirect, "/")
 	}
 
