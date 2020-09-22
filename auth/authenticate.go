@@ -34,8 +34,13 @@ func Login(c echo.Context) error {
 	// usually in the form of X-Forwarded-Uri:/?middle_auth_token=a
 	uri := c.Request().Header.Get("X-Forwarded-Uri")
 	if uri != "" {
-		uri = uri[1:] // remove leading slash
 		log.Printf("Forwarded uri %v\n", uri)
+		if uri[0] == '/' {
+			uri = uri[1:] // remove leading slash
+		}
+		if uri[0] == '?' {
+			uri = uri[1:] // remove leading question mark
+		}
 	} else {
 		uri = c.Request().URL.RawQuery
 	}
