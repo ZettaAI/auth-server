@@ -12,6 +12,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/akhileshh/auth-server/utils"
 	"github.com/labstack/echo"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -22,6 +23,7 @@ const (
 	GoogleOAuthLoginEP = "/auth/google/login"
 	// GoogleOAuthCallbackEP google oauth callback endpoint
 	GoogleOAuthCallbackEP = "/auth/google/callback"
+	googleOAuthUserInfoEP = "https://www.googleapis.com/oauth2/v2/userinfo"
 )
 
 var oauthConfig = &oauth2.Config{
@@ -35,19 +37,7 @@ var oauthConfig = &oauth2.Config{
 // GoogleLogin google oauth login handler
 func GoogleLogin(c echo.Context) error {
 	// https://developers.google.com/identity/protocols/oauth2/openid-connect#server-flow
-
-	// check headers from load balancer/proxy
-	host := c.Request().Header.Get("X-Forwarded-Host")
-	scheme := c.Request().Header.Get("X-Forwarded-Proto")
-
-	// if none use host and scheme in request
-	if host == "" && scheme == "" {
-		host = c.Request().Host
-		scheme = c.Scheme()
-	}
-
-	oauthConfig.RedirectURL = fmt.Sprintf(
-		"%v://%v%v", scheme, host, GoogleOAuthCallbackEP)
+	oauthConfig.RedirectURL = utils.GetRequestSchemeAndHostURL(c) + GoogleOAuthCallbackEP
 	log.Printf("Google callback URL %v\n", oauthConfig.RedirectURL)
 	return c.Redirect(
 		http.StatusTemporaryRedirect,
@@ -76,8 +66,9 @@ func GoogleCallback(c echo.Context) error {
 	redirectTo := fmt.Sprintf(
 		"%v://%v/auth?middle_auth_token=%v", c.Scheme(), c.Request().Host, token)
 
-	log.Printf("Got user email: %v, token: %v", userInfo["email"], token)
-	log.Println(redirectTo)
+	log.Printf("Email: %v\n", userInfo["email"])
+	log.Printf("Token: %v\n", token)
+	log.Printf("Redirect: %v\n", redirectTo)
 	return c.Redirect(
 		http.StatusFound,
 		redirectTo,
@@ -97,18 +88,18 @@ func createOauthStateCookie(c echo.Context) string {
 func getUserInfo(code string) ([]byte, error) {
 	token, err := oauthConfig.Exchange(context.Background(), code)
 	if err != nil {
-		return nil, fmt.Errorf("code exchange wrong: %s", err.Error())
+		return nil, fmt.Errorf("Failed code exchange: %s", err.Error())
 	}
 
 	response, err := http.Get(
-		"https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken)
+		fmt.Sprintf("%v?access_token=%v", googleOAuthUserInfoEP, token.AccessToken))
 	if err != nil {
-		return nil, fmt.Errorf("failed getting user info: %s", err.Error())
+		return nil, fmt.Errorf("Failed getting user info: %s", err.Error())
 	}
 	defer response.Body.Close()
 	contents, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed read response: %s", err.Error())
+		return nil, fmt.Errorf("Failed read response: %s", err.Error())
 	}
 	return contents, nil
 }

@@ -8,6 +8,7 @@ import (
 
 	"github.com/akhileshh/auth-server/handlers"
 	"github.com/akhileshh/auth-server/redis"
+	"github.com/akhileshh/auth-server/utils"
 	"github.com/labstack/echo"
 )
 
@@ -43,8 +44,7 @@ func Login(c echo.Context) error {
 	log.Printf("Parsed uri %v\n", uri)
 	log.Printf("queryMap %v\n", queryMap)
 
-	authURL := fmt.Sprintf(
-		"%v://%v%v", c.Scheme(), c.Request().Host, handlers.GoogleOAuthLoginEP)
+	authURL := utils.GetRequestSchemeAndHostURL(c) + handlers.GoogleOAuthLoginEP
 	authHeader := fmt.Sprintf("Bearer realm='%v', error='%v'", authURL, "invalid_token")
 	return validateToken(c, authHeader, queryMap.Get("middle_auth_token"))
 }
