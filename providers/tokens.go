@@ -1,4 +1,4 @@
-package handlers
+package providers
 
 import (
 	"crypto/rand"

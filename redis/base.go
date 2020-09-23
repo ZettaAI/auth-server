@@ -29,7 +29,7 @@ var RedisDB = redis.NewClient(&redis.Options{
 func GetToken(k string) (string, error) {
 	val, err := RedisDB.Get(ctx, k).Result()
 	if err != nil {
-		log.Println(err.Error())
+		log.Printf("Redis get failed:%v", err.Error())
 		return "", err
 	}
 	return val, err
@@ -39,7 +39,7 @@ func GetToken(k string) (string, error) {
 func SetToken(k string, v string, x time.Duration) bool {
 	err := RedisDB.Set(ctx, k, v, x).Err()
 	if err != nil {
-		log.Println(err.Error())
+		log.Printf("Redis set failed:%v", err.Error())
 		panic(err)
 	}
 	return true
@@ -50,7 +50,7 @@ func SetToken(k string, v string, x time.Duration) bool {
 func SetTokenIfNotExists(k string, v string, x time.Duration) bool {
 	val, err := RedisDB.SetNX(ctx, k, v, x).Result()
 	if err != nil {
-		log.Println(err.Error())
+		log.Printf("Redis set failed:%v", err.Error())
 		panic(err)
 	}
 	return val
