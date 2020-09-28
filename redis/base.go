@@ -19,7 +19,7 @@ var RedisDB = redis.NewClient(&redis.Options{
 	DB: func() int {
 		db, err := strconv.ParseInt(os.Getenv("REDIS_DB"), 10, 0)
 		if err != nil {
-			panic(err)
+			return 0
 		}
 		return int(db)
 	}(),

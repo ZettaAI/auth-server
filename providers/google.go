@@ -57,6 +57,7 @@ func GoogleLogin(c echo.Context) error {
 
 // GoogleCallback google oauth callback handler
 func GoogleCallback(c echo.Context) error {
+	// verify if tampered
 	oAuthState, _ := c.Cookie("oAuthState")
 	if c.FormValue("state") != oAuthState.Value {
 		log.Println("Invalid google oauth state.")

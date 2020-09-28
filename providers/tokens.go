@@ -8,7 +8,7 @@ import (
 	"github.com/akhileshh/auth-server/redis"
 )
 
-//https://elithrar.github.io/article/generating-secure-random-numbers-crypto-rand/
+// https://elithrar.github.io/article/generating-secure-random-numbers-crypto-rand/
 
 // generateRandomBytes returns securely generated random bytes.
 // It will return an error if the system's secure random
