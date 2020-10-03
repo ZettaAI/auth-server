@@ -31,8 +31,7 @@ func Login(c echo.Context) error {
 	// check if token exists in forwarded URL or in headers (TODO)
 	log.Printf("Header %v\n", c.Request().Header)
 	authURL := utils.GetRequestSchemeAndHostURL(c) + providers.GoogleOAuthLoginEP
-	authHeader := fmt.Sprintf("Bearer realm=%v, error=%v", authURL, "invalid_token")
-	return validateToken(c, authHeader, extractAuthToken(c))
+	return validateToken(c, authURL, extractAuthToken(c))
 }
 
 // extractAuthToken helper function to parse query string
@@ -52,19 +51,24 @@ func extractAuthToken(c echo.Context) string {
 // validateToken checks for token validity
 // if not valid, add header to response to indicate where user can authenticate
 // this is currently based on how client handles auth (neuroglancer)
-func validateToken(c echo.Context, authHeader string, token string) error {
+func validateToken(c echo.Context, authURL string, token string) error {
+	authHeader := fmt.Sprintf("Bearer realm=%v, error=%v", authURL, "invalid_token")
 	// no token provided
 	if token == "" {
 		// bad request 400
 		c.Response().Header().Set("WWW-Authenticate", authHeader)
-		return c.String(http.StatusBadRequest, "Login required.")
+		return c.String(
+			http.StatusBadRequest, fmt.Sprintf("Please login at %v", authURL))
 	}
 	// token available, check if present in redis cache
 	email, err := redis.GetToken(token)
 	if err != nil {
 		// bad token, unauthorized 401
 		c.Response().Header().Set("WWW-Authenticate", authHeader)
-		return c.String(http.StatusUnauthorized, "Invalid/expired token.")
+		return c.String(
+			http.StatusUnauthorized,
+			fmt.Sprintf("Invalid/expired token. Please login at %v", authURL),
+		)
 	}
 	log.Printf("Logged in user email: %v\n", email)
 	// add forward header for backend

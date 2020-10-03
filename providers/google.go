@@ -67,7 +67,8 @@ func GoogleCallback(c echo.Context) error {
 	data, err := getUserInfo(c.FormValue("code"))
 	if err != nil {
 		log.Println(err.Error())
-		return c.String(http.StatusBadRequest, "Error getting user email.")
+		return c.String(
+			http.StatusBadRequest, fmt.Sprintf("Error getting user email: %v", err))
 	}
 
 	// got email, generate token and add it to redis cache
