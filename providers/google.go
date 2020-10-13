@@ -58,6 +58,7 @@ func GoogleLogin(c echo.Context) error {
 // GoogleCallback google oauth callback handler
 func GoogleCallback(c echo.Context) error {
 	// verify if tampered
+	oauthConfig.RedirectURL = utils.GetRequestSchemeAndHostURL(c) + GoogleOAuthCallbackEP
 	oAuthState, _ := c.Cookie("oAuthState")
 	if c.FormValue("state") != oAuthState.Value {
 		log.Println("Invalid google oauth state.")
@@ -101,7 +102,7 @@ func createOauthStateCookie(c echo.Context) string {
 }
 
 func getUserInfo(code string) ([]byte, error) {
-	token, err := oauthConfig.Exchange(context.Background(), code)
+	token, err := oauthConfig.Exchange(context.TODO(), code)
 	if err != nil {
 		return nil, fmt.Errorf("Failed code exchange: %s", err.Error())
 	}
