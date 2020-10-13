@@ -44,7 +44,7 @@ func generateRandomString(n int) (string, error) {
 // Adds the token to cache with user email as value.
 func GetUniqueToken(email string) string {
 	token, _ := generateRandomString(32)
-	for !redis.SetTokenIfNotExists(token, email, 7*24*time.Hour) {
+	for !redis.SetTokenIfNotExists(token, email, 30*24*time.Hour) {
 		token, _ = generateRandomString(32)
 	}
 	return token
