@@ -39,9 +39,6 @@ var oauthConfig = &oauth2.Config{
 func GoogleLogin(c echo.Context) error {
 	// https://developers.google.com/identity/protocols/oauth2/openid-connect#server-flow
 	oauthConfig.RedirectURL = utils.GetRequestSchemeAndHostURL(c) + GoogleOAuthCallbackEP
-	log.Printf("Google callback URL %v\n", oauthConfig.RedirectURL)
-
-	log.Println(c.Request().URL.RawQuery)
 	queryMap, _ := url.ParseQuery(c.Request().URL.RawQuery)
 
 	c.SetCookie(&http.Cookie{
@@ -77,14 +74,12 @@ func GoogleCallback(c echo.Context) error {
 	json.Unmarshal(data, &userInfo)
 	token := GetUniqueToken(fmt.Sprintf("%v", userInfo["email"]))
 
-	log.Printf("Email: %v\n", userInfo["email"])
 	redirectTo, _ := c.Cookie("redirectTo")
 	if redirectTo.Value == "" {
 		return c.String(http.StatusOK, token)
 	}
 
 	redirectURL := fmt.Sprintf("%v?middle_auth_token=%v", redirectTo.Value, token)
-	log.Printf("Redirect: %v\n", redirectURL)
 	return c.Redirect(
 		http.StatusFound,
 		redirectURL,

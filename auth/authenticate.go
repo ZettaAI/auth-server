@@ -2,7 +2,6 @@ package auth
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -29,7 +28,6 @@ const (
 //   X-Forwarded-Prefix:[/lab2]
 func Login(c echo.Context) error {
 	// check if token exists in forwarded URL or in headers (TODO)
-	log.Printf("Header %v\n", c.Request().Header)
 	authURL := utils.GetRequestSchemeAndHostURL(c) + providers.GoogleOAuthLoginEP
 	return validateToken(c, authURL, extractAuthToken(c))
 }
@@ -70,7 +68,6 @@ func validateToken(c echo.Context, authURL string, token string) error {
 			fmt.Sprintf("Invalid/expired token. Please login at %v", authURL),
 		)
 	}
-	log.Printf("Logged in user email: %v\n", email)
 	// add forward header for backend
 	c.Response().Header().Set("X-Forwarded-User", email)
 	return c.String(http.StatusOK, "")
