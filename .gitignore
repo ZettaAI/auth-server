@@ -16,5 +16,6 @@
 .vscode/
 .devcontainer/
 
-test.go
 dump.rdb
+
+coverage.txt
