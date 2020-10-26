@@ -1,4 +1,5 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/ZettaAI/auth-server)](https://goreportcard.com/report/github.com/ZettaAI/auth-server)
+[![Build Status](https://api.travis-ci.org/ZettaAI/auth-server.svg?branch=master)](https://travis-ci.org/ZettaAI/auth-server)
 
 Auth Server for proofreading services.
 
