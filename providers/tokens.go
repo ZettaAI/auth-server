@@ -3,6 +3,8 @@ package providers
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/akhileshh/auth-server/redis"
@@ -43,8 +45,16 @@ func generateRandomString(n int) (string, error) {
 // Tries to create a new token until it is unique.
 // Adds the token to cache with user email as value.
 func GetUniqueToken(email string) string {
+	nDays := func() int {
+		n, err := strconv.ParseInt(os.Getenv("AUTH_TOKEN_EXPIRY_DAYS"), 10, 0)
+		if err != nil {
+			return 30 // use 30 as default number of days
+		}
+		return int(n)
+	}()
+
 	token, _ := generateRandomString(32)
-	for !redis.SetTokenIfNotExists(token, email, 30*24*time.Hour) {
+	for !redis.SetTokenIfNotExists(token, email, time.Hour*time.Duration(nDays*24)) {
 		token, _ = generateRandomString(32)
 	}
 	return token
