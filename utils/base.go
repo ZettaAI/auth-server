@@ -11,7 +11,7 @@ import (
 func GetRequestSchemeAndHostURL(c echo.Context) string {
 	// check headers from load balancer/proxy
 	host := c.Request().Header.Get("X-Forwarded-Host")
-	scheme := c.Request().Header.Get("X-Forwarded-Proto")
+	scheme := c.Request().Header.Get(echo.HeaderXForwardedProto)
 
 	// if none use host and scheme in request
 	if host == "" && scheme == "" {
