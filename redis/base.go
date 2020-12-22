@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -51,6 +52,26 @@ func SetTokenIfNotExists(k string, v string, x time.Duration) bool {
 	val, err := RedisDB.SetNX(ctx, k, v, x).Result()
 	if err != nil {
 		log.Printf("Redis set failed:%v", err.Error())
+		panic(err)
+	}
+	return val
+}
+
+// GetTokensStartingWith all keys starting with given string
+func GetTokensStartingWith(k string) []string {
+	val, err := RedisDB.Keys(ctx, fmt.Sprintf("%v*", k)).Result()
+	if err != nil {
+		log.Printf("Redis keys failed:%v", err.Error())
+		panic(err)
+	}
+	return val
+}
+
+// DeleteTokens when user logs out
+func DeleteTokens(keys ...string) int64 {
+	val, err := RedisDB.Del(ctx, keys...).Result()
+	if err != nil {
+		log.Printf("Redis del failed:%v", err.Error())
 		panic(err)
 	}
 	return val

@@ -72,9 +72,13 @@ func GoogleCallback(c echo.Context) error {
 	// got email, generate token and add it to redis cache
 	var userInfo map[string]interface{}
 	json.Unmarshal(data, &userInfo)
-	token := GetUniqueToken(fmt.Sprintf("%v", userInfo["email"]))
 
 	redirectTo, _ := c.Cookie("redirectTo")
+	if redirectTo.Value == "none" {
+		return c.String(http.StatusOK, "")
+	}
+
+	token := GetUniqueToken(fmt.Sprintf("%v", userInfo["email"]))
 	if redirectTo.Value == "" {
 		return c.String(http.StatusOK, token)
 	}

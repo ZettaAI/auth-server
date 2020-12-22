@@ -15,11 +15,13 @@ func TestExtractAuthToken(t *testing.T) {
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", strings.NewReader(""))
 	rec := httptest.NewRecorder()
-	assert.Equal(t, "", extractAuthToken(e.NewContext(req, rec)))
+	res, _ := extractAuthToken(e.NewContext(req, rec))
+	assert.Equal(t, "", res)
 
 	token := "abc123"
 	req.Header.Set("X-Forwarded-Uri", fmt.Sprintf("path?middle_auth_token=%v", token))
-	assert.Equal(t, token, extractAuthToken(e.NewContext(req, rec)))
+	res, _ = extractAuthToken(e.NewContext(req, rec))
+	assert.Equal(t, token, res)
 }
 
 func TestLogin(t *testing.T) {

@@ -23,17 +23,18 @@ const (
 //   Checks if a given token already exists in redis cache:
 //     If yes, user is authenticated, proceed to check authorization.
 //     If not, call oauth handler based on x-oauth header (default: Google OAuth)
-//       Create a secret token and map it to user email in redis.
+//       Create a token and map it to user email in redis.
 // AUTHORIZATION: TODO
 //   X-Forwarded-Prefix:[/lab2]
 func Login(c echo.Context) error {
 	// check if token exists in forwarded URL or in headers (TODO)
 	authURL := utils.GetRequestSchemeAndHostURL(c) + providers.GoogleOAuthLoginEP
-	return validateToken(c, authURL, extractAuthToken(c))
+	token, _ := extractAuthToken(c)
+	return validateToken(c, authURL, token)
 }
 
 // extractAuthToken helper function to parse query string
-func extractAuthToken(c echo.Context) string {
+func extractAuthToken(c echo.Context) (string, error) {
 	// check forwarded uri from load balancer/proxy
 	// in the form of X-Forwarded-Uri:<string>
 	uri := c.Request().Header.Get("X-Forwarded-Uri")
@@ -43,7 +44,13 @@ func extractAuthToken(c echo.Context) string {
 		uri = c.Request().URL.RawQuery
 	}
 	queryMap, _ := url.ParseQuery(uri)
-	return queryMap.Get("middle_auth_token")
+	if val, ok := queryMap["middle_auth_token"]; ok {
+		return val[0], nil
+	}
+	// for convenience redirect users to google login
+	// when query param middle_auth_token is missing
+	c.Request().URL.Query().Set("redirect", "none")
+	return "", providers.GoogleLogin(c)
 }
 
 // validateToken checks for token validity

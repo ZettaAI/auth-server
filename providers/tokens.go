@@ -3,8 +3,10 @@ package providers
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/akhileshh/auth-server/redis"
@@ -57,5 +59,27 @@ func GetUniqueToken(email string) string {
 	for !redis.SetTokenIfNotExists(token, email, time.Hour*time.Duration(nDays*24)) {
 		token, _ = generateRandomString(32)
 	}
+
+	// for efficient logout keep a copy of token starting with associated email
+	// this is more convienient than maintaining a set of tokens with email as key
+	// because expiration can't be added to set members
+	// when a user wants to logout, simply scan all keys starting with email
+	// and delete the combined key and token key
+	redis.SetToken(
+		fmt.Sprintf("%v:%v", email, token), "", time.Hour*time.Duration(nDays*24))
 	return token
+}
+
+// DeleteUserTokens delete all tokens of given user
+// TODO use goroutine for faster response
+func DeleteUserTokens(email string) {
+	// gather all keys that need to be deleted
+	userCombinedTokens := redis.GetTokensStartingWith(email)
+	userTokens := make([]string, len(userCombinedTokens))
+	for i, key := range userCombinedTokens {
+		// combined token has the format email:token
+		userTokens[i] = strings.Split(key, ":")[1]
+	}
+	// delete all with one redis call for efficiency
+	redis.DeleteTokens(append(userCombinedTokens, userTokens...)...)
 }
