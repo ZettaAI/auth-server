@@ -70,5 +70,5 @@ func validateToken(c echo.Context, authURL string, token string) error {
 	}
 	// add forward header for backend
 	c.Response().Header().Set("X-Forwarded-User", email)
-	return c.String(http.StatusOK, "")
+	return Authorize(c, email)
 }
