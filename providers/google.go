@@ -22,6 +22,8 @@ import (
 const (
 	// GoogleOAuthLoginEP login endpoint
 	GoogleOAuthLoginEP = "/auth/google/login"
+	// GoogleOAuthLogoutEP logout endpoint
+	GoogleOAuthLogoutEP = "/auth/google/logout"
 	// GoogleOAuthCallbackEP google oauth callback endpoint
 	GoogleOAuthCallbackEP = "/auth/google/callback"
 	googleOAuthUserInfoEP = "https://www.googleapis.com/oauth2/v2/userinfo"
@@ -75,6 +77,8 @@ func GoogleCallback(c echo.Context) error {
 
 	redirectTo, _ := c.Cookie("redirectTo")
 	if redirectTo.Value == "none" {
+		c.Response().Header().Set(
+			"X-Forwarded-User", fmt.Sprintf("%v", userInfo["email"]))
 		return c.String(http.StatusOK, "")
 	}
 
