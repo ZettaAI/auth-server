@@ -54,7 +54,6 @@ func extractAuthToken(c echo.Context) string {
 
 	token, err := c.Cookie(providers.AuthTokenIdentifier)
 	if err == nil {
-		log.Printf("found token in cookie")
 		return token.Value
 	}
 	return "none"
@@ -95,7 +94,6 @@ func forceLogin(c echo.Context) error {
 		c.Request().Header.Get("X-Forwarded-Prefix"),
 		c.Request().Header.Get("X-Forwarded-Uri"),
 	)
-	log.Printf("No token, redirect %v", redirectURL)
 	c.QueryParams().Set("redirect", redirectURL)
 	return providers.GoogleLogin(c)
 }

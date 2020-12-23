@@ -39,12 +39,11 @@ func GoogleLogin(c echo.Context) error {
 	// https://developers.google.com/identity/protocols/oauth2/openid-connect#server-flow
 	oauthConfig.RedirectURL = utils.GetRequestSchemeAndHostURL(c) + GoogleOAuthCallbackEP
 	queryMap := c.QueryParams()
-	log.Printf("queryMap: %v", queryMap)
 	c.SetCookie(&http.Cookie{
 		Name:   "redirectTo",
 		Value:  queryMap.Get("redirect"),
 		MaxAge: 300,
-		Path:   "/auth",
+		Path:   "/",
 	})
 	return c.Redirect(
 		http.StatusTemporaryRedirect,
@@ -96,18 +95,12 @@ func GoogleCallback(c echo.Context) error {
 		url := fmt.Sprintf("%v?%v=%v", redirect, AuthTokenIdentifier, token)
 		return c.Redirect(http.StatusFound, url)
 	} else if redirect != "" {
-		log.Println("Direct API access.")
-
-		token := GetUniqueToken(fmt.Sprintf("%v", userInfo["email"]), true)
-		url := fmt.Sprintf("%v?%v=%v", redirect, AuthTokenIdentifier, token)
-		log.Printf("redirectTo: %v", url)
 		c.SetCookie(&http.Cookie{
 			Name:   AuthTokenIdentifier,
-			Value:  token,
+			Value:  GetUniqueToken(fmt.Sprintf("%v", userInfo["email"]), true),
 			MaxAge: 300,
-			Path:   "/auth",
+			Path:   "/",
 		})
-
 		return c.Redirect(http.StatusFound, redirect)
 	}
 	return c.String(
@@ -118,13 +111,12 @@ func createOauthStateCookie(c echo.Context) string {
 	b := make([]byte, 16)
 	rand.Read(b)
 	state := base64.URLEncoding.EncodeToString(b)
-	cookie := http.Cookie{
+	c.SetCookie(&http.Cookie{
 		Name:   "oAuthState",
 		Value:  state,
 		MaxAge: 300,
-		Path:   "/auth",
-	}
-	c.SetCookie(&cookie)
+		Path:   "/",
+	})
 	return state
 }
 

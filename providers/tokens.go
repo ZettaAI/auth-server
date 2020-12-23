@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -88,9 +87,6 @@ func DeleteUserTokens(email string) int64 {
 	// gather all keys that need to be deleted
 	userCombinedTokens := redis.GetTokensStartingWith(email)
 	userTokens := make([]string, len(userCombinedTokens))
-
-	log.Print(userCombinedTokens)
-
 	for i, key := range userCombinedTokens {
 		// combined token has the format email:token
 		userTokens[i] = strings.Split(key, ":")[1]
