@@ -13,6 +13,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/akhileshh/auth-server/authorize"
 	"github.com/akhileshh/auth-server/utils"
 	"github.com/labstack/echo"
 	"golang.org/x/oauth2"
@@ -77,9 +78,7 @@ func GoogleCallback(c echo.Context) error {
 
 	redirectTo, _ := c.Cookie("redirectTo")
 	if redirectTo.Value == "none" {
-		c.Response().Header().Set(
-			"X-Forwarded-User", fmt.Sprintf("%v", userInfo["email"]))
-		return c.String(http.StatusOK, "")
+		return authorize.Authorize(c, fmt.Sprintf("%v", userInfo["email"]))
 	}
 
 	token := GetUniqueToken(fmt.Sprintf("%v", userInfo["email"]))

@@ -1,4 +1,4 @@
-package auth
+package authenticate
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/akhileshh/auth-server/authorize"
 	"github.com/akhileshh/auth-server/providers"
 	"github.com/akhileshh/auth-server/redis"
 	"github.com/akhileshh/auth-server/utils"
@@ -15,26 +16,32 @@ import (
 const (
 	// AuthEP main auth endpoint
 	AuthEP = "/auth"
+	// AuthLogoutEP main logout endpoint
+	AuthLogoutEP = "/auth/logout_all"
 )
 
 // Login main login handler.
-// AUTHENTICATION:
-//   X-Forwarded-Uri:[/?middle_auth_token=a]
-//   Checks if a given token already exists in redis cache:
-//     If yes, user is authenticated, proceed to check authorization.
-//     If not, call oauth handler based on x-oauth header (default: Google OAuth)
-//       Create a token and map it to user email in redis.
-// AUTHORIZATION: TODO
-//   X-Forwarded-Prefix:[/lab2]
+// X-Forwarded-Uri:[/?middle_auth_token=a]
+// Checks if a given token already exists in redis cache:
+//   If yes, user is authenticated, proceed to check authorization.
+//   If not, call oauth handler based on x-oauth header (default: Google OAuth)
+// 	   Create a token and map it to user email in redis.
 func Login(c echo.Context) error {
-	// check if token exists in forwarded URL or in headers (TODO)
+	// TODO check if token exists in forwarded URL or in headers
 	authURL := utils.GetRequestSchemeAndHostURL(c) + providers.GoogleOAuthLoginEP
-	token, _ := extractAuthToken(c)
+	token := extractAuthToken(c)
+	if token == "none" {
+		// for convenience redirect users to google login
+		// when query param middle_auth_token is missing
+		// this is useful when a user visits an endpoint directly
+		c.Request().URL.Query().Set("redirect", "none")
+		return providers.GoogleLogin(c)
+	}
 	return validateToken(c, authURL, token)
 }
 
 // extractAuthToken helper function to parse query string
-func extractAuthToken(c echo.Context) (string, error) {
+func extractAuthToken(c echo.Context) string {
 	// check forwarded uri from load balancer/proxy
 	// in the form of X-Forwarded-Uri:<string>
 	uri := c.Request().Header.Get("X-Forwarded-Uri")
@@ -45,12 +52,9 @@ func extractAuthToken(c echo.Context) (string, error) {
 	}
 	queryMap, _ := url.ParseQuery(uri)
 	if val, ok := queryMap["middle_auth_token"]; ok {
-		return val[0], nil
+		return val[0]
 	}
-	// for convenience redirect users to google login
-	// when query param middle_auth_token is missing
-	c.Request().URL.Query().Set("redirect", "none")
-	return "", providers.GoogleLogin(c)
+	return "none"
 }
 
 // validateToken checks for token validity
@@ -75,7 +79,22 @@ func validateToken(c echo.Context, authURL string, token string) error {
 			fmt.Sprintf("Invalid/expired token. Please login at %v", authURL),
 		)
 	}
-	// add forward header for backend
-	c.Response().Header().Set("X-Forwarded-User", email)
-	return Authorize(c, email)
+	return authorize.Authorize(c, email)
+}
+
+// Logout main logout handler.
+// User is prompted to login for indentification when visiting /auth/logout_all
+// After getting user email, delete associated tokens in redis.
+func Logout(c echo.Context) error {
+	// TODO check if token exists in forwarded URL or in headers
+	authURL := utils.GetRequestSchemeAndHostURL(c) + providers.GoogleOAuthLoginEP
+	token := extractAuthToken(c)
+	if token == "none" {
+		// for convenience redirect users to google login
+		// when query param middle_auth_token is missing
+		// this is useful when a user visits an endpoint directly
+		c.Request().URL.Query().Set("redirect", "none")
+		return providers.GoogleLogin(c)
+	}
+	return validateToken(c, authURL, token)
 }

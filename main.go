@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/akhileshh/auth-server/auth"
+	"github.com/akhileshh/auth-server/authenticate"
 	"github.com/akhileshh/auth-server/providers"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -36,8 +36,7 @@ func main() {
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
-	e.GET(auth.AuthEP, auth.Login)
-	// e.GET(auth.AuthorizeEP, auth.Authorize)
+	e.GET(authenticate.AuthEP, authenticate.Login)
 	e.GET(providers.GoogleOAuthLoginEP, providers.GoogleLogin)
 	e.GET(providers.GoogleOAuthCallbackEP, providers.GoogleCallback)
 
