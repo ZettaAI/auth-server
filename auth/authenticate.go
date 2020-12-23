@@ -6,10 +6,10 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/akhileshh/auth-server/authorize"
-	"github.com/akhileshh/auth-server/providers"
-	"github.com/akhileshh/auth-server/redis"
-	"github.com/akhileshh/auth-server/utils"
+	"github.com/ZettaAI/auth-server/authorize"
+	"github.com/ZettaAI/auth-server/providers"
+	"github.com/ZettaAI/auth-server/redis"
+	"github.com/ZettaAI/auth-server/utils"
 	"github.com/labstack/echo"
 )
 

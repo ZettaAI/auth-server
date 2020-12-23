@@ -1,4 +1,4 @@
-module github.com/akhileshh/auth-server
+module github.com/ZettaAI/auth-server
 
 go 1.15
 

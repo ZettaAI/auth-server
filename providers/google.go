@@ -13,8 +13,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/akhileshh/auth-server/authorize"
-	"github.com/akhileshh/auth-server/utils"
+	"github.com/ZettaAI/auth-server/authorize"
+	"github.com/ZettaAI/auth-server/utils"
 	"github.com/labstack/echo"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"

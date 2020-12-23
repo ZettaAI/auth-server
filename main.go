@@ -3,8 +3,8 @@ package main
 import (
 	"net/http"
 
-	"github.com/akhileshh/auth-server/authenticate"
-	"github.com/akhileshh/auth-server/providers"
+	"github.com/ZettaAI/auth-server/authenticate"
+	"github.com/ZettaAI/auth-server/providers"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 )

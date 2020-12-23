@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akhileshh/auth-server/redis"
+	"github.com/ZettaAI/auth-server/redis"
 )
 
 // https://elithrar.github.io/article/generating-secure-random-numbers-crypto-rand/
