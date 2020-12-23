@@ -9,11 +9,9 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
-	"time"
+	"strings"
 
-	"github.com/ZettaAI/auth-server/authorize"
 	"github.com/ZettaAI/auth-server/utils"
 	"github.com/labstack/echo"
 	"golang.org/x/oauth2"
@@ -23,8 +21,6 @@ import (
 const (
 	// GoogleOAuthLoginEP login endpoint
 	GoogleOAuthLoginEP = "/auth/google/login"
-	// GoogleOAuthLogoutEP logout endpoint
-	GoogleOAuthLogoutEP = "/auth/google/logout"
 	// GoogleOAuthCallbackEP google oauth callback endpoint
 	GoogleOAuthCallbackEP = "/auth/google/callback"
 	googleOAuthUserInfoEP = "https://www.googleapis.com/oauth2/v2/userinfo"
@@ -42,12 +38,12 @@ var oauthConfig = &oauth2.Config{
 func GoogleLogin(c echo.Context) error {
 	// https://developers.google.com/identity/protocols/oauth2/openid-connect#server-flow
 	oauthConfig.RedirectURL = utils.GetRequestSchemeAndHostURL(c) + GoogleOAuthCallbackEP
-	queryMap, _ := url.ParseQuery(c.Request().URL.RawQuery)
-
+	queryMap := c.QueryParams()
 	c.SetCookie(&http.Cookie{
-		Name:    "redirectTo",
-		Value:   queryMap.Get("redirect"),
-		Expires: time.Now().Add(1 * time.Hour),
+		Name:   "redirectTo",
+		Value:  queryMap.Get("redirect"),
+		MaxAge: 300,
+		Path:   "/",
 	})
 	return c.Redirect(
 		http.StatusTemporaryRedirect,
@@ -57,9 +53,17 @@ func GoogleLogin(c echo.Context) error {
 
 // GoogleCallback google oauth callback handler
 func GoogleCallback(c echo.Context) error {
-	// verify if tampered
 	oauthConfig.RedirectURL = utils.GetRequestSchemeAndHostURL(c) + GoogleOAuthCallbackEP
-	oAuthState, _ := c.Cookie("oAuthState")
+
+	// check if tampered
+	oAuthState, err := c.Cookie("oAuthState")
+	if err != nil {
+		log.Printf("Cookie error: %v", err.Error())
+		return c.String(
+			http.StatusBadRequest,
+			fmt.Sprintf("Could not find cookie: %v", err.Error()),
+		)
+	}
 	if c.FormValue("state") != oAuthState.Value {
 		log.Println("Invalid google oauth state.")
 		return c.String(http.StatusBadRequest, "Response integrity issue.")
@@ -75,31 +79,44 @@ func GoogleCallback(c echo.Context) error {
 	// got email, generate token and add it to redis cache
 	var userInfo map[string]interface{}
 	json.Unmarshal(data, &userInfo)
-
-	redirectTo, _ := c.Cookie("redirectTo")
-	if redirectTo.Value == "none" {
-		return authorize.Authorize(c, fmt.Sprintf("%v", userInfo["email"]))
+	redirectTo, err := c.Cookie("redirectTo")
+	if err != nil {
+		log.Printf("Cookie error: %v", err.Error())
+		return c.String(
+			http.StatusBadRequest,
+			fmt.Sprintf("Could not find cookie: %v", err.Error()),
+		)
 	}
 
-	token := GetUniqueToken(fmt.Sprintf("%v", userInfo["email"]))
-	if redirectTo.Value == "" {
-		return c.String(http.StatusOK, token)
+	redirect := redirectTo.Value
+	// logged in from neuroglancer
+	if strings.Contains(redirect, "appspot.com") {
+		token := GetUniqueToken(fmt.Sprintf("%v", userInfo["email"]), false)
+		url := fmt.Sprintf("%v?%v=%v", redirect, AuthTokenIdentifier, token)
+		return c.Redirect(http.StatusFound, url)
+	} else if redirect != "" {
+		c.SetCookie(&http.Cookie{
+			Name:   AuthTokenIdentifier,
+			Value:  GetUniqueToken(fmt.Sprintf("%v", userInfo["email"]), true),
+			MaxAge: 45,
+			Path:   "/",
+		})
+		return c.Redirect(http.StatusFound, redirect)
 	}
-
-	redirectURL := fmt.Sprintf("%v?middle_auth_token=%v", redirectTo.Value, token)
-	return c.Redirect(
-		http.StatusFound,
-		redirectURL,
-	)
+	return c.String(
+		http.StatusOK, GetUniqueToken(fmt.Sprintf("%v", userInfo["email"]), false))
 }
 
 func createOauthStateCookie(c echo.Context) string {
-	expiration := time.Now().Add(1 * time.Hour)
 	b := make([]byte, 16)
 	rand.Read(b)
 	state := base64.URLEncoding.EncodeToString(b)
-	cookie := http.Cookie{Name: "oAuthState", Value: state, Expires: expiration}
-	c.SetCookie(&cookie)
+	c.SetCookie(&http.Cookie{
+		Name:   "oAuthState",
+		Value:  state,
+		MaxAge: 300,
+		Path:   "/",
+	})
 	return state
 }
 

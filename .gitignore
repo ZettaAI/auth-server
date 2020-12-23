@@ -20,3 +20,4 @@ dump.rdb
 
 coverage.txt
 casbin/
+auth-server
