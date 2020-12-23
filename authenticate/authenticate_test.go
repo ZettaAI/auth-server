@@ -16,7 +16,7 @@ func TestExtractAuthToken(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", strings.NewReader(""))
 	rec := httptest.NewRecorder()
 	res := extractAuthToken(e.NewContext(req, rec))
-	assert.Equal(t, "", res)
+	assert.Equal(t, "none", res)
 
 	token := "abc123"
 	req.Header.Set("X-Forwarded-Uri", fmt.Sprintf("path?middle_auth_token=%v", token))
