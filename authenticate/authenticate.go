@@ -69,7 +69,7 @@ func validateToken(c echo.Context, authURL string, token string) error {
 		// bad request 400
 		c.Response().Header().Set("WWW-Authenticate", authHeader)
 		return c.String(
-			http.StatusBadRequest, fmt.Sprintf("Please login at %v", authURL))
+			http.StatusBadRequest, fmt.Sprintf("Login at %v to get a token.", authURL))
 	}
 	// token available, check if present in redis cache
 	email, err := redis.GetToken(token)
@@ -78,7 +78,7 @@ func validateToken(c echo.Context, authURL string, token string) error {
 		c.Response().Header().Set("WWW-Authenticate", authHeader)
 		return c.String(
 			http.StatusUnauthorized,
-			fmt.Sprintf("Invalid/expired token. Please login at %v", authURL),
+			fmt.Sprintf("Invalid/expired token. Login at %v to get a token.", authURL),
 		)
 	}
 	return authorize.Authorize(c, email)

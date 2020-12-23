@@ -98,7 +98,7 @@ func GoogleCallback(c echo.Context) error {
 		c.SetCookie(&http.Cookie{
 			Name:   AuthTokenIdentifier,
 			Value:  GetUniqueToken(fmt.Sprintf("%v", userInfo["email"]), true),
-			MaxAge: 300,
+			MaxAge: 45,
 			Path:   "/",
 		})
 		return c.Redirect(http.StatusFound, redirect)
