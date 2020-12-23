@@ -4,12 +4,18 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/ZettaAI/auth-server/redis"
+)
+
+const (
+	// AuthTokenIdentifier login endpoint
+	AuthTokenIdentifier = "middle_auth_token"
 )
 
 // https://elithrar.github.io/article/generating-secure-random-numbers-crypto-rand/
@@ -46,7 +52,7 @@ func generateRandomString(n int) (string, error) {
 // GetUniqueToken generates a token not already in cache.
 // Tries to create a new token until it is unique.
 // Adds the token to cache with user email as value.
-func GetUniqueToken(email string) string {
+func GetUniqueToken(email string, temporary bool) string {
 	nDays := func() int {
 		n, err := strconv.ParseInt(os.Getenv("AUTH_TOKEN_EXPIRY_DAYS"), 10, 0)
 		if err != nil {
@@ -55,8 +61,14 @@ func GetUniqueToken(email string) string {
 		return int(n)
 	}()
 
+	expiration := time.Hour * time.Duration(nDays*24)
+	if temporary {
+		// expire quickly when user visits endpoints direclty (not via neuroglancer)
+		expiration = time.Minute
+	}
+
 	token, _ := generateRandomString(32)
-	for !redis.SetTokenIfNotExists(token, email, time.Hour*time.Duration(nDays*24)) {
+	for !redis.SetTokenIfNotExists(token, email, expiration) {
 		token, _ = generateRandomString(32)
 	}
 
@@ -66,20 +78,23 @@ func GetUniqueToken(email string) string {
 	// when a user wants to logout, simply scan all keys starting with email
 	// and delete the combined key and token key
 	redis.SetToken(
-		fmt.Sprintf("%v:%v", email, token), "", time.Hour*time.Duration(nDays*24))
+		fmt.Sprintf("%v:%v", email, token), "", expiration)
 	return token
 }
 
 // DeleteUserTokens delete all tokens of given user
 // TODO use goroutine for faster response
-func DeleteUserTokens(email string) {
+func DeleteUserTokens(email string) int64 {
 	// gather all keys that need to be deleted
 	userCombinedTokens := redis.GetTokensStartingWith(email)
 	userTokens := make([]string, len(userCombinedTokens))
+
+	log.Print(userCombinedTokens)
+
 	for i, key := range userCombinedTokens {
 		// combined token has the format email:token
 		userTokens[i] = strings.Split(key, ":")[1]
 	}
 	// delete all with one redis call for efficiency
-	redis.DeleteTokens(append(userCombinedTokens, userTokens...)...)
+	return redis.DeleteTokens(append(userCombinedTokens, userTokens...)...)
 }

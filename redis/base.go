@@ -59,7 +59,9 @@ func SetTokenIfNotExists(k string, v string, x time.Duration) bool {
 
 // GetTokensStartingWith all keys starting with given string
 func GetTokensStartingWith(k string) []string {
-	val, err := RedisDB.Keys(ctx, fmt.Sprintf("%v*", k)).Result()
+	pattern := fmt.Sprintf("%v*", k)
+	log.Printf("Checking for keys with pattern %v", pattern)
+	val, err := RedisDB.Keys(ctx, pattern).Result()
 	if err != nil {
 		log.Printf("Redis keys failed:%v", err.Error())
 		panic(err)

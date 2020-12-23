@@ -2,6 +2,7 @@ package authenticate
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -17,7 +18,7 @@ const (
 	// AuthEP main auth endpoint
 	AuthEP = "/auth"
 	// AuthLogoutEP main logout endpoint
-	AuthLogoutEP = "/auth/logout_all"
+	AuthLogoutEP = "/auth/logout"
 )
 
 // Login main login handler.
@@ -31,11 +32,7 @@ func Login(c echo.Context) error {
 	authURL := utils.GetRequestSchemeAndHostURL(c) + providers.GoogleOAuthLoginEP
 	token := extractAuthToken(c)
 	if token == "none" {
-		// for convenience redirect users to google login
-		// when query param middle_auth_token is missing
-		// this is useful when a user visits an endpoint directly
-		c.Request().URL.Query().Set("redirect", "none")
-		return providers.GoogleLogin(c)
+		return forceLogin(c)
 	}
 	return validateToken(c, authURL, token)
 }
@@ -51,8 +48,14 @@ func extractAuthToken(c echo.Context) string {
 		uri = c.Request().URL.RawQuery
 	}
 	queryMap, _ := url.ParseQuery(uri)
-	if val, ok := queryMap["middle_auth_token"]; ok {
+	if val, ok := queryMap[providers.AuthTokenIdentifier]; ok {
 		return val[0]
+	}
+
+	token, err := c.Cookie(providers.AuthTokenIdentifier)
+	if err == nil {
+		log.Printf("found token in cookie")
+		return token.Value
 	}
 	return "none"
 }
@@ -82,11 +85,28 @@ func validateToken(c echo.Context, authURL string, token string) error {
 	return authorize.Authorize(c, email)
 }
 
+func forceLogin(c echo.Context) error {
+	// for convenience redirect users to google login
+	// when query param middle_auth_token is missing
+	// this is useful when a user visits an endpoint directly
+	redirectURL := fmt.Sprintf(
+		"%v%v%v",
+		utils.GetRequestSchemeAndHostURL(c),
+		c.Request().Header.Get("X-Forwarded-Prefix"),
+		c.Request().Header.Get("X-Forwarded-Uri"),
+	)
+	log.Printf("No token, redirect %v", redirectURL)
+	c.QueryParams().Set("redirect", redirectURL)
+	return providers.GoogleLogin(c)
+}
+
 // Logout main logout handler.
-// User is prompted to login for indentification when visiting /auth/logout_all
+// User is prompted to login for indentification when visiting /auth/logout
 // Email is captured in X-Forwarded-User after successful authentication
 // After getting user email, delete associated tokens in redis.
 func Logout(c echo.Context) error {
-	providers.DeleteUserTokens(c.Request().Header.Get("X-Forwarded-User"))
+	email := c.Request().Header.Get("X-Forwarded-User")
+	res := providers.DeleteUserTokens(email)
+	log.Printf("Logged out user: %v, deleted %v keys.", email, res)
 	return c.String(http.StatusOK, "Logout successful.")
 }
