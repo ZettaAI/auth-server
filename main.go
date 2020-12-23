@@ -37,6 +37,7 @@ func main() {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
 	e.GET(authenticate.AuthEP, authenticate.Login)
+	e.GET(authenticate.AuthLogoutEP, authenticate.Logout)
 	e.GET(providers.GoogleOAuthLoginEP, providers.GoogleLogin)
 	e.GET(providers.GoogleOAuthCallbackEP, providers.GoogleCallback)
 

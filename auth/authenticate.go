@@ -84,17 +84,9 @@ func validateToken(c echo.Context, authURL string, token string) error {
 
 // Logout main logout handler.
 // User is prompted to login for indentification when visiting /auth/logout_all
+// Email is captured in X-Forwarded-User after successful authentication
 // After getting user email, delete associated tokens in redis.
 func Logout(c echo.Context) error {
-	// TODO check if token exists in forwarded URL or in headers
-	authURL := utils.GetRequestSchemeAndHostURL(c) + providers.GoogleOAuthLoginEP
-	token := extractAuthToken(c)
-	if token == "none" {
-		// for convenience redirect users to google login
-		// when query param middle_auth_token is missing
-		// this is useful when a user visits an endpoint directly
-		c.Request().URL.Query().Set("redirect", "none")
-		return providers.GoogleLogin(c)
-	}
-	return validateToken(c, authURL, token)
+	providers.DeleteUserTokens(c.Request().Header.Get("X-Forwarded-User"))
+	return c.String(http.StatusOK, "Logout successful.")
 }

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/casbin/casbin/v2"
 	defaultrolemanager "github.com/casbin/casbin/v2/rbac/default-role-manager"
@@ -29,7 +28,10 @@ func Authorize(c echo.Context, email string) error {
 	// add forward headers for backend use
 	c.Response().Header().Set("X-Forwarded-User", email)
 	c.Response().Header().Set("X-Forwarded-Domain", domain)
-	return c.String(http.StatusOK, strconv.FormatBool(authorized))
+	return c.String(
+		http.StatusOK,
+		fmt.Sprintf("User %v authorized to %v %v", email, method, uri),
+	)
 }
 
 func enforce(email string, domain string, method string, uri string) bool {
