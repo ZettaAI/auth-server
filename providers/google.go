@@ -13,6 +13,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/akhileshh/auth-server/authorize"
 	"github.com/akhileshh/auth-server/utils"
 	"github.com/labstack/echo"
 	"golang.org/x/oauth2"
@@ -22,6 +23,8 @@ import (
 const (
 	// GoogleOAuthLoginEP login endpoint
 	GoogleOAuthLoginEP = "/auth/google/login"
+	// GoogleOAuthLogoutEP logout endpoint
+	GoogleOAuthLogoutEP = "/auth/google/logout"
 	// GoogleOAuthCallbackEP google oauth callback endpoint
 	GoogleOAuthCallbackEP = "/auth/google/callback"
 	googleOAuthUserInfoEP = "https://www.googleapis.com/oauth2/v2/userinfo"
@@ -72,9 +75,13 @@ func GoogleCallback(c echo.Context) error {
 	// got email, generate token and add it to redis cache
 	var userInfo map[string]interface{}
 	json.Unmarshal(data, &userInfo)
-	token := GetUniqueToken(fmt.Sprintf("%v", userInfo["email"]))
 
 	redirectTo, _ := c.Cookie("redirectTo")
+	if redirectTo.Value == "none" {
+		return authorize.Authorize(c, fmt.Sprintf("%v", userInfo["email"]))
+	}
+
+	token := GetUniqueToken(fmt.Sprintf("%v", userInfo["email"]))
 	if redirectTo.Value == "" {
 		return c.String(http.StatusOK, token)
 	}
