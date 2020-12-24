@@ -37,6 +37,20 @@ func Login(c echo.Context) error {
 	return validateToken(c, authURL, token)
 }
 
+func forceLogin(c echo.Context) error {
+	// for convenience redirect users to google login
+	// when middle_auth_token is missing
+	// happens when a user visits an endpoint directly
+	redirectURL := fmt.Sprintf(
+		"%v%v%v",
+		utils.GetRequestSchemeAndHostURL(c),
+		c.Request().Header.Get("X-Forwarded-Prefix"),
+		c.Request().Header.Get("X-Forwarded-Uri"),
+	)
+	c.QueryParams().Set("redirect", redirectURL)
+	return providers.GoogleLogin(c)
+}
+
 // extractAuthToken helper function to parse query string
 func extractAuthToken(c echo.Context) string {
 	// check forwarded uri from load balancer/proxy
@@ -56,6 +70,8 @@ func extractAuthToken(c echo.Context) string {
 	if err == nil {
 		return token.Value
 	}
+	// use none to explicitly indicate missing query param or cookie
+	// need to differentiate param set to "" vs missing param
 	return "none"
 }
 
@@ -84,20 +100,6 @@ func validateToken(c echo.Context, authURL string, token string) error {
 	return authorize.Authorize(c, email)
 }
 
-func forceLogin(c echo.Context) error {
-	// for convenience redirect users to google login
-	// when query param middle_auth_token is missing
-	// this is useful when a user visits an endpoint directly
-	redirectURL := fmt.Sprintf(
-		"%v%v%v",
-		utils.GetRequestSchemeAndHostURL(c),
-		c.Request().Header.Get("X-Forwarded-Prefix"),
-		c.Request().Header.Get("X-Forwarded-Uri"),
-	)
-	c.QueryParams().Set("redirect", redirectURL)
-	return providers.GoogleLogin(c)
-}
-
 // Logout main logout handler.
 // User is prompted to login for indentification when visiting /auth/logout
 // Email is captured in X-Forwarded-User after successful authentication
@@ -106,5 +108,13 @@ func Logout(c echo.Context) error {
 	email := c.Request().Header.Get("X-Forwarded-User")
 	res := providers.DeleteUserTokens(email)
 	log.Printf("Logged out user: %v, deleted %v keys.", email, res)
-	return c.String(http.StatusOK, "Logout successful.")
+
+	// discard cookie if exists
+	c.SetCookie(&http.Cookie{
+		Name:   providers.AuthTokenIdentifier,
+		Value:  "",
+		MaxAge: -1,
+		Path:   "/",
+	})
+	return c.String(http.StatusOK, fmt.Sprintf("%v logged out.", email))
 }
