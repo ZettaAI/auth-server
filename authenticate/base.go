@@ -37,6 +37,20 @@ func Login(c echo.Context) error {
 	return validateToken(c, authURL, token)
 }
 
+func forceLogin(c echo.Context) error {
+	// for convenience redirect users to google login
+	// when middle_auth_token is missing
+	// happens when a user visits an endpoint directly
+	redirectURL := fmt.Sprintf(
+		"%v%v%v",
+		utils.GetRequestSchemeAndHostURL(c),
+		c.Request().Header.Get("X-Forwarded-Prefix"),
+		c.Request().Header.Get("X-Forwarded-Uri"),
+	)
+	c.QueryParams().Set("redirect", redirectURL)
+	return providers.GoogleLogin(c)
+}
+
 // extractAuthToken helper function to parse query string
 func extractAuthToken(c echo.Context) string {
 	// check forwarded uri from load balancer/proxy
@@ -56,6 +70,8 @@ func extractAuthToken(c echo.Context) string {
 	if err == nil {
 		return token.Value
 	}
+	// use none to explicitly indicate missing query param or cookie
+	// need to differentiate param set to "" vs missing param
 	return "none"
 }
 
@@ -82,20 +98,6 @@ func validateToken(c echo.Context, authURL string, token string) error {
 		)
 	}
 	return authorize.Authorize(c, email)
-}
-
-func forceLogin(c echo.Context) error {
-	// for convenience redirect users to google login
-	// when query param middle_auth_token is missing
-	// this is useful when a user visits an endpoint directly
-	redirectURL := fmt.Sprintf(
-		"%v%v%v",
-		utils.GetRequestSchemeAndHostURL(c),
-		c.Request().Header.Get("X-Forwarded-Prefix"),
-		c.Request().Header.Get("X-Forwarded-Uri"),
-	)
-	c.QueryParams().Set("redirect", redirectURL)
-	return providers.GoogleLogin(c)
 }
 
 // Logout main logout handler.
