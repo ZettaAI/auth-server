@@ -114,5 +114,5 @@ func Logout(c echo.Context) error {
 		MaxAge: -1,
 		Path:   "/",
 	})
-	return c.String(http.StatusOK, "Logout successful.")
+	return c.String(http.StatusOK, fmt.Sprintf("%v logged out.", email))
 }
