@@ -1,6 +1,9 @@
+// Adapted from github.com/casbin/casbin-dashboard
+
 package authorize
 
 import (
+	"log"
 	"os"
 	"runtime"
 
@@ -41,6 +44,10 @@ func NewOrmManager(driverName string, dataSourceName string) *OrmManager {
 	a.driverName = driverName
 	a.dataSourceName = dataSourceName
 
+	log.Print("Opening DB connection")
+	log.Print(a.driverName)
+	log.Print(a.dataSourceName)
+
 	// Open the DB, create it if not existed.
 	a.open()
 
@@ -55,7 +62,7 @@ func (a *OrmManager) open() {
 		panic(err)
 	}
 	a.engine = engine
-	a.createTables()
+	// a.createTables()
 }
 
 func (a *OrmManager) close() {

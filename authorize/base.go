@@ -1,7 +1,6 @@
 package authorize
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -17,31 +16,33 @@ func Authorize(c echo.Context, email string) error {
 	method := c.Request().Header.Get("X-Forwarded-Method")
 	domain := c.Request().Header.Get("X-Forwarded-Prefix")
 
-	log.Print(uri)
-	log.Print(method)
-	log.Print(domain)
-
 	// add forward headers for backend use
+	c.Response().Header().Set("X-Forwarded-Uri", uri)
+	c.Response().Header().Set("X-Forwarded-Method", method)
 	c.Response().Header().Set("X-Forwarded-User", email)
 	c.Response().Header().Set("X-Forwarded-Domain", domain)
+
+	// authorization model needs more work
+	// disabled for now
+	return c.String(http.StatusOK, "success")
 
 	// if strings.Contains(uri, "logout") {
 	// 	return c.String(http.StatusOK, "success")
 	// }
 
-	authorized := enforce(email, domain, method, uri)
-	if !authorized {
-		// not enough permissions 403
-		return c.String(
-			http.StatusForbidden,
-			fmt.Sprintf(
-				"User %v does not have the permission to %v %v", email, method, uri),
-		)
-	}
-	return c.String(
-		http.StatusOK,
-		fmt.Sprintf("User %v authorized to %v %v", email, method, uri),
-	)
+	// authorized := enforce(email, domain, method, uri)
+	// if !authorized {
+	// 	// not enough permissions 403
+	// 	return c.String(
+	// 		http.StatusForbidden,
+	// 		fmt.Sprintf(
+	// 			"User %v does not have the permission to %v %v", email, method, uri),
+	// 	)
+	// }
+	// return c.String(
+	// 	http.StatusOK,
+	// 	fmt.Sprintf("User %v authorized to %v %v", email, method, uri),
+	// )
 }
 
 func enforce(email string, domain string, method string, uri string) bool {

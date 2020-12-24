@@ -1,5 +1,7 @@
 package authorize
 
+import "log"
+
 // Adapter casbin adapter
 type Adapter struct {
 	ID            string   `xorm:"varchar(100) notnull pk" json:"id"`
@@ -23,9 +25,10 @@ func GetAdapters() []*Adapter {
 // GetAdapter get casbin adapter
 func GetAdapter(id string) *Adapter {
 	adapter := Adapter{ID: id}
+	log.Printf("getting adapter %v", adapter.ID)
 	existed, err := ormManager.engine.Get(&adapter)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	if existed {

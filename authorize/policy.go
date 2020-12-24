@@ -1,6 +1,8 @@
 package authorize
 
 import (
+	"log"
+
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
 	xormadapter "github.com/casbin/xorm-adapter/v2"
@@ -42,6 +44,7 @@ func matrixToCasbinRules(pType string, policies [][]string) []*CasbinRule {
 }
 
 func getEnforcer(adapter *Adapter) (*casbin.Enforcer, error) {
+	log.Printf("getting enforcer for %v", adapter)
 	a, err := xormadapter.NewAdapter(adapter.Param1, adapter.Param2, true)
 	if err != nil {
 		return nil, err
@@ -57,11 +60,17 @@ func getEnforcer(adapter *Adapter) (*casbin.Enforcer, error) {
 // GetAdapterPolicies get casbin rules of an adapter
 func GetAdapterPolicies(id string) (bool, string, []*CasbinRule) {
 	a := GetAdapter(id)
+	log.Printf("got adapter %v", a.ID)
 	e, err := getEnforcer(a)
+	log.Printf("got enforcer for %v", a.ID)
 	if err != nil {
 		return false, err.Error(), nil
 	}
-	return true, "", matrixToCasbinRules("p", e.GetPolicy())
+
+	log.Printf("getting policies for %v", e)
+	p := e.GetPolicy()
+	log.Printf("got policies: %v", p)
+	return true, "", matrixToCasbinRules("p", p)
 }
 
 // GetAdapterGroupingPolicies get casbin group rules of an adapter
