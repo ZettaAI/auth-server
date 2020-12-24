@@ -5,9 +5,10 @@ go 1.15
 require (
 	cloud.google.com/go v0.74.0 // indirect
 	github.com/casbin/casbin/v2 v2.19.5
-	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/casbin/gorm-adapter/v3 v3.0.4
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/go-redis/redis/v8 v8.4.4
+	github.com/go-sql-driver/mysql v1.5.0
 	github.com/kr/text v0.2.0 // indirect
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/gommon v0.3.0 // indirect

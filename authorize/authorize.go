@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/casbin/casbin/v2"
 	defaultrolemanager "github.com/casbin/casbin/v2/rbac/default-role-manager"
@@ -18,13 +17,17 @@ func Authorize(c echo.Context, email string) error {
 	method := c.Request().Header.Get("X-Forwarded-Method")
 	domain := c.Request().Header.Get("X-Forwarded-Prefix")
 
+	log.Print(uri)
+	log.Print(method)
+	log.Print(domain)
+
 	// add forward headers for backend use
 	c.Response().Header().Set("X-Forwarded-User", email)
 	c.Response().Header().Set("X-Forwarded-Domain", domain)
 
-	if strings.Contains(uri, "logout") {
-		return c.String(http.StatusOK, "success")
-	}
+	// if strings.Contains(uri, "logout") {
+	// 	return c.String(http.StatusOK, "success")
+	// }
 
 	authorized := enforce(email, domain, method, uri)
 	if !authorized {

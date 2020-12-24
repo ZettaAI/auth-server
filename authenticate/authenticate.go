@@ -106,5 +106,13 @@ func Logout(c echo.Context) error {
 	email := c.Request().Header.Get("X-Forwarded-User")
 	res := providers.DeleteUserTokens(email)
 	log.Printf("Logged out user: %v, deleted %v keys.", email, res)
+
+	// discard cookie if exists
+	c.SetCookie(&http.Cookie{
+		Name:   providers.AuthTokenIdentifier,
+		Value:  "",
+		MaxAge: -1,
+		Path:   "/",
+	})
 	return c.String(http.StatusOK, "Logout successful.")
 }
