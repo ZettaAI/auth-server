@@ -63,7 +63,14 @@ func GetUniqueToken(email string, temporary bool) string {
 	expiration := time.Hour * time.Duration(nDays*24)
 	if temporary {
 		// expire quickly when user visits endpoints direclty (not via neuroglancer)
-		expiration = time.Minute
+		nSeconds := func() int {
+			db, err := strconv.ParseInt(os.Getenv("AUTH_TOKEN_TEMP_EXPIRY_SECONDS"), 10, 0)
+			if err != nil {
+				return 60
+			}
+			return int(db)
+		}()
+		expiration = time.Second * time.Duration(nSeconds)
 	}
 
 	token, _ := generateRandomString(32)

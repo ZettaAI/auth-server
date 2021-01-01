@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/ZettaAI/auth-server/utils"
@@ -96,10 +97,16 @@ func GoogleCallback(c echo.Context) error {
 		return c.Redirect(http.StatusFound, url)
 	} else if redirect != "" {
 		c.SetCookie(&http.Cookie{
-			Name:   AuthTokenIdentifier,
-			Value:  GetUniqueToken(fmt.Sprintf("%v", userInfo["email"]), true),
-			MaxAge: 45,
-			Path:   "/",
+			Name:  AuthTokenIdentifier,
+			Value: GetUniqueToken(fmt.Sprintf("%v", userInfo["email"]), true),
+			Path:  "/",
+			MaxAge: func() int {
+				db, err := strconv.ParseInt(os.Getenv("AUTH_TOKEN_TEMP_EXPIRY_SECONDS"), 10, 0)
+				if err != nil {
+					return 60
+				}
+				return int(db)
+			}(),
 		})
 		return c.Redirect(http.StatusFound, redirect)
 	}
