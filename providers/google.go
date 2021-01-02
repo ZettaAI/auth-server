@@ -101,11 +101,12 @@ func GoogleCallback(c echo.Context) error {
 			Value: GetUniqueToken(fmt.Sprintf("%v", userInfo["email"]), true),
 			Path:  "/",
 			MaxAge: func() int {
-				db, err := strconv.ParseInt(os.Getenv("AUTH_TOKEN_TEMP_EXPIRY_SECONDS"), 10, 0)
+				n, err := strconv.Atoi(os.Getenv("AUTH_TOKEN_TEMP_EXPIRY_SECONDS"))
 				if err != nil {
+					log.Printf("env error AUTH_TOKEN_TEMP_EXPIRY_SECONDS %v", err)
 					return 60
 				}
-				return int(db)
+				return int(n)
 			}(),
 		})
 		return c.Redirect(http.StatusFound, redirect)

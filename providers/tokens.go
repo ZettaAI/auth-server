@@ -53,7 +53,7 @@ func generateRandomString(n int) (string, error) {
 // Adds the token to cache with user email as value.
 func GetUniqueToken(email string, temporary bool) string {
 	nDays := func() int {
-		n, err := strconv.ParseInt(os.Getenv("AUTH_TOKEN_EXPIRY_DAYS"), 10, 0)
+		n, err := strconv.Atoi(os.Getenv("AUTH_TOKEN_EXPIRY_DAYS"))
 		if err != nil {
 			return 30 // use 30 as default number of days
 		}
@@ -64,11 +64,11 @@ func GetUniqueToken(email string, temporary bool) string {
 	if temporary {
 		// expire quickly when user visits endpoints direclty (not via neuroglancer)
 		nSeconds := func() int {
-			db, err := strconv.ParseInt(os.Getenv("AUTH_TOKEN_TEMP_EXPIRY_SECONDS"), 10, 0)
+			n, err := strconv.Atoi(os.Getenv("AUTH_TOKEN_TEMP_EXPIRY_SECONDS"))
 			if err != nil {
 				return 60
 			}
-			return int(db)
+			return int(n)
 		}()
 		expiration = time.Second * time.Duration(nSeconds)
 	}
