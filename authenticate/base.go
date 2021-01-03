@@ -92,9 +92,16 @@ func validateToken(c echo.Context, authURL string, token string) error {
 	if err != nil {
 		// bad token, unauthorized 401
 		c.Response().Header().Set("WWW-Authenticate", authHeader)
+		// discard cookie if exists, for user convenience
+		c.SetCookie(&http.Cookie{
+			Name:   providers.AuthTokenIdentifier,
+			Value:  "",
+			MaxAge: -1,
+			Path:   "/",
+		})
 		return c.String(
 			http.StatusUnauthorized,
-			fmt.Sprintf("Invalid/expired token. Login at %v to get a token.", authURL),
+			fmt.Sprintf("Invalid/expired token. Try again."),
 		)
 	}
 	return authorize.Authorize(c, email)
