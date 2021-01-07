@@ -30,8 +30,9 @@ const (
 func Login(c echo.Context) error {
 	// TODO check if token exists in forwarded URL or in headers
 	authURL := utils.GetRequestSchemeAndHostURL(c) + providers.GoogleOAuthLoginEP
+	origin := c.Request().Header.Get(echo.HeaderOrigin)
 	token := extractAuthToken(c)
-	if token == "none" {
+	if token == "none" && !strings.Contains(origin, "appspot.com") {
 		return forceLogin(c)
 	}
 	return validateToken(c, authURL, token)
