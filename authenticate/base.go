@@ -51,7 +51,9 @@ func forceLogin(c echo.Context) error {
 	return providers.GoogleLogin(c)
 }
 
-// extractAuthToken helper function to parse query string
+// extractAuthToken helper function
+// checks if token is present in
+// query params, auth header, or cookie
 func extractAuthToken(c echo.Context) string {
 	// check forwarded uri from load balancer/proxy
 	// in the form of X-Forwarded-Uri:<string>
@@ -66,6 +68,16 @@ func extractAuthToken(c echo.Context) string {
 		return val[0]
 	}
 
+	// check if authorization header has token
+	authHeader := c.Request().Header.Get(echo.HeaderAuthorization)
+	if authHeader != "" {
+		authToken := strings.Fields(authHeader)
+		if len(authToken) == 2 {
+			return authToken[1]
+		}
+	}
+
+	// check if cookie has token
 	token, err := c.Cookie(providers.AuthTokenIdentifier)
 	if err == nil {
 		return token.Value
