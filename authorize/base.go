@@ -51,13 +51,26 @@ func enforce(email string, domain string, method string, uri string) bool {
 		return true
 	}
 
+	e.AddFunction("open", openMatchFunc)
+	// logger := e.GetModel().GetLogger()
+	// logger.EnableLog(true)
+
 	rm := e.GetRoleManager()
-	rm.(*defaultrolemanager.RoleManager).AddMatchingFunc("KeyMatch2", util.KeyMatch2)
-	rm.(*defaultrolemanager.RoleManager).AddDomainMatchingFunc("KeyMatch2", util.KeyMatch2)
+	// rm.SetLogger(logger)
+	rm.(*defaultrolemanager.RoleManager).AddMatchingFunc("keyMatch2", util.KeyMatch2)
+	rm.(*defaultrolemanager.RoleManager).AddDomainMatchingFunc("keyMatch2", util.KeyMatch2)
 
 	authorized, err := e.Enforce(email, domain, uri, method)
 	if err != nil {
 		log.Fatalf("Error: %s", err)
 	}
 	return authorized
+}
+
+func openMatch(key string) bool {
+	return util.RegexMatch(key, ".*(logout|json|nglstate).*")
+}
+
+func openMatchFunc(args ...interface{}) (interface{}, error) {
+	return (bool)(openMatch(args[0].(string))), nil
 }
