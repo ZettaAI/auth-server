@@ -3,7 +3,6 @@ package providers
 import (
 	"log"
 	"os"
-	"time"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -11,25 +10,34 @@ import (
 
 // User user info
 type User struct {
-	ID        uint   `gorm:"default:uuid_generate_v3()"`
-	Email     string `gorm:"primaryKey"`
+	ID        uint   `gorm:"primaryKey;autoIncrement"`
+	Email     string `gorm:"unique"`
 	Name      string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt []uint8
+	UpdatedAt []uint8
 }
 
-func addUser(email string, name string) int {
+func addUser(email string, name string) {
 	db, err := gorm.Open(mysql.Open(os.Getenv("USER_DB_STRING")), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Could not connect to DB server: %v", err.Error())
 	}
 
-	user := User{Email: email, Name: name}
-	result := db.Create(&user)
+	// if !db.Migrator().HasTable(&User{}) {
+	// 	db.Migrator().CreateTable(&User{})
+	// }
+
+	user := User{}
+	result := db.Where(&User{Email: email}).First(&user)
 	if result.Error != nil {
-		log.Fatalf("Could not insert user: %v", result.Error.Error())
+		log.Printf("Could not find user %s: %v\n", email, result.Error.Error())
+		user = User{Email: email, Name: name}
+		result = db.Create(&user)
+		if result.Error != nil {
+			log.Printf("Could not add new user: %v\n", result.Error.Error())
+		}
+		log.Printf("User %s added with ID %d\n", email, user.ID)
 	}
-	return int(user.ID)
 }
 
 // GetUserID retrieve user ID from DB
@@ -39,7 +47,11 @@ func GetUserID(email string) int {
 		log.Fatalf("Could not connect to DB server: %v", err.Error())
 	}
 
-	user := User{Email: email}
-	db.First(&user)
+	user := User{}
+	result := db.Where(&User{Email: email}).First(&user)
+	if result.Error != nil {
+		log.Printf("Could not find user %s: %v\n", email, result.Error.Error())
+	}
+	log.Printf("User %s retrieved with ID %d\n", user.Email, user.ID)
 	return int(user.ID)
 }

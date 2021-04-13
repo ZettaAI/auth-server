@@ -31,8 +31,11 @@ var oauthConfig = &oauth2.Config{
 	RedirectURL:  fmt.Sprintf("http://localhost:8000%v", GoogleOAuthCallbackEP),
 	ClientID:     os.Getenv("GOOGLE_OAUTH_CLIENT_ID"),
 	ClientSecret: os.Getenv("GOOGLE_OAUTH_CLIENT_SECRET"),
-	Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
-	Endpoint:     google.Endpoint,
+	Scopes: []string{
+		"https://www.googleapis.com/auth/userinfo.email",
+		"https://www.googleapis.com/auth/userinfo.profile",
+	},
+	Endpoint: google.Endpoint,
 }
 
 // GoogleLogin google oauth login handler
