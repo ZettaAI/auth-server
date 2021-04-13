@@ -125,7 +125,7 @@ func validateToken(c echo.Context, authURL string, token string) error {
 // Email is captured in X-Forwarded-User after successful authentication
 // After getting user email, delete associated tokens in redis.
 func Logout(c echo.Context) error {
-	email := c.Request().Header.Get("X-Forwarded-User")
+	email := c.Request().Header.Get("X-Forwarded-Email")
 	res := providers.DeleteUserTokens(email)
 	log.Printf("Logged out user: %v, deleted %v keys.", email, res)
 

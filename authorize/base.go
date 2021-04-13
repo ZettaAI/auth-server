@@ -24,6 +24,7 @@ func Authorize(c echo.Context, email string) error {
 	c.Response().Header().Set("X-Forwarded-Uri", uri)
 	c.Response().Header().Set("X-Forwarded-Method", method)
 	c.Response().Header().Set("X-Forwarded-User", strconv.Itoa(providers.GetUserID(email)))
+	c.Response().Header().Set("X-Forwarded-Email", email)
 	c.Response().Header().Set("X-Forwarded-Domain", domain)
 
 	if strings.Contains(uri, "logout") {
