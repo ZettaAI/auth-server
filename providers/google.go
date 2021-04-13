@@ -89,6 +89,7 @@ func GoogleCallback(c echo.Context) error {
 		)
 	}
 
+	addUser(fmt.Sprintf("%v", userInfo["email"]), fmt.Sprintf("%v", userInfo["name"]))
 	redirect := redirectTo.Value
 	// logged in from neuroglancer
 	if strings.Contains(redirect, "appspot.com") {
@@ -131,18 +132,18 @@ func createOauthStateCookie(c echo.Context) string {
 func getUserInfo(code string) ([]byte, error) {
 	token, err := oauthConfig.Exchange(context.TODO(), code)
 	if err != nil {
-		return nil, fmt.Errorf("Failed code exchange: %s", err.Error())
+		return nil, fmt.Errorf("failed code exchange: %s", err.Error())
 	}
 
 	response, err := http.Get(
 		fmt.Sprintf("%v?access_token=%v", googleOAuthUserInfoEP, token.AccessToken))
 	if err != nil {
-		return nil, fmt.Errorf("Failed getting user info: %s", err.Error())
+		return nil, fmt.Errorf("failed getting user info: %s", err.Error())
 	}
 	defer response.Body.Close()
 	contents, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return nil, fmt.Errorf("Failed read response: %s", err.Error())
+		return nil, fmt.Errorf("failed read response: %s", err.Error())
 	}
 	return contents, nil
 }

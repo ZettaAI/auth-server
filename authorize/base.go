@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
+	"github.com/ZettaAI/auth-server/providers"
 	"github.com/casbin/casbin/v2"
 	defaultrolemanager "github.com/casbin/casbin/v2/rbac/default-role-manager"
 	"github.com/casbin/casbin/v2/util"
@@ -21,7 +23,7 @@ func Authorize(c echo.Context, email string) error {
 	// add forward headers for backend use
 	c.Response().Header().Set("X-Forwarded-Uri", uri)
 	c.Response().Header().Set("X-Forwarded-Method", method)
-	c.Response().Header().Set("X-Forwarded-User", email)
+	c.Response().Header().Set("X-Forwarded-User", strconv.Itoa(providers.GetUserID(email)))
 	c.Response().Header().Set("X-Forwarded-Domain", domain)
 
 	if strings.Contains(uri, "logout") {
