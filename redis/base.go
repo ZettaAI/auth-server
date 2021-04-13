@@ -40,8 +40,7 @@ func GetToken(k string) (string, error) {
 func SetToken(k string, v string, x time.Duration) bool {
 	err := RedisDB.Set(ctx, k, v, x).Err()
 	if err != nil {
-		log.Printf("Redis set failed:%v", err.Error())
-		panic(err)
+		log.Fatalf("Redis set failed:%v", err.Error())
 	}
 	return true
 }
@@ -51,8 +50,7 @@ func SetToken(k string, v string, x time.Duration) bool {
 func SetTokenIfNotExists(k string, v string, x time.Duration) bool {
 	val, err := RedisDB.SetNX(ctx, k, v, x).Result()
 	if err != nil {
-		log.Printf("Redis set failed:%v", err.Error())
-		panic(err)
+		log.Fatalf("Redis set failed:%v", err.Error())
 	}
 	return val
 }
@@ -62,8 +60,7 @@ func GetTokensStartingWith(k string) []string {
 	pattern := fmt.Sprintf("%v*", k)
 	val, err := RedisDB.Keys(ctx, pattern).Result()
 	if err != nil {
-		log.Printf("Redis keys failed:%v", err.Error())
-		panic(err)
+		log.Fatalf("Redis keys failed:%v", err.Error())
 	}
 	return val
 }
@@ -72,8 +69,7 @@ func GetTokensStartingWith(k string) []string {
 func DeleteTokens(keys ...string) int64 {
 	val, err := RedisDB.Del(ctx, keys...).Result()
 	if err != nil {
-		log.Printf("Redis del failed:%v", err.Error())
-		panic(err)
+		log.Fatalf("Redis del failed:%v", err.Error())
 	}
 	return val
 }
