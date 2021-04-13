@@ -69,7 +69,8 @@ func GetTokensStartingWith(k string) []string {
 func DeleteTokens(keys ...string) int64 {
 	val, err := RedisDB.Del(ctx, keys...).Result()
 	if err != nil {
-		log.Fatalf("Redis del failed:%v", err.Error())
+		log.Printf("Redis del failed:%v", err.Error())
+		return 0
 	}
 	return val
 }
