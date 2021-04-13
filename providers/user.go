@@ -36,7 +36,6 @@ func addUser(email string, name string) {
 		if result.Error != nil {
 			log.Printf("Could not add new user: %v\n", result.Error.Error())
 		}
-		log.Printf("User %s added with ID %d\n", email, user.ID)
 	}
 }
 
@@ -52,6 +51,5 @@ func GetUserID(email string) int {
 	if result.Error != nil {
 		log.Printf("Could not find user %s: %v\n", email, result.Error.Error())
 	}
-	log.Printf("User %s retrieved with ID %d\n", user.Email, user.ID)
 	return int(user.ID)
 }
