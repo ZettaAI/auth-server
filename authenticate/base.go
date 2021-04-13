@@ -59,7 +59,7 @@ func extractAuthToken(c echo.Context) string {
 	// check forwarded uri from load balancer/proxy
 	// in the form of X-Forwarded-Uri:<string>
 	uri := c.Request().Header.Get("X-Forwarded-Uri")
-	if uri != "" && strings.IndexRune(uri, '?') != -1 {
+	if uri != "" && strings.ContainsRune(uri, '?') {
 		uri = strings.Split(uri, "?")[1]
 	} else {
 		uri = c.Request().URL.RawQuery
@@ -114,7 +114,7 @@ func validateToken(c echo.Context, authURL string, token string) error {
 		})
 		return c.String(
 			http.StatusUnauthorized,
-			fmt.Sprintf("Invalid/expired token. Try again."),
+			"Invalid/expired token. Try again.",
 		)
 	}
 	return authorize.Authorize(c, email)
