@@ -117,6 +117,7 @@ func validateToken(c echo.Context, authURL string, token string) error {
 			"Invalid/expired token. Try again.",
 		)
 	}
+	providers.AddUser(email, "NA")
 	return authorize.Authorize(c, email)
 }
 

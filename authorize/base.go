@@ -23,7 +23,12 @@ func Authorize(c echo.Context, email string) error {
 	// add forward headers for backend use
 	c.Response().Header().Set("X-Forwarded-Uri", uri)
 	c.Response().Header().Set("X-Forwarded-Method", method)
-	c.Response().Header().Set("X-Forwarded-User", strconv.Itoa(providers.GetUserID(email)))
+
+	userID := strconv.Itoa(providers.GetUserID(email))
+	if userID == "0" {
+		userID = email
+	}
+	c.Response().Header().Set("X-Forwarded-User", userID)
 	c.Response().Header().Set("X-Forwarded-Email", email)
 	c.Response().Header().Set("X-Forwarded-Domain", domain)
 

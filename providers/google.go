@@ -92,7 +92,7 @@ func GoogleCallback(c echo.Context) error {
 		)
 	}
 
-	addUser(fmt.Sprintf("%v", userInfo["email"]), fmt.Sprintf("%v", userInfo["name"]))
+	AddUser(fmt.Sprintf("%v", userInfo["email"]), fmt.Sprintf("%v", userInfo["name"]))
 	redirect := redirectTo.Value
 	// logged in from neuroglancer
 	if strings.Contains(redirect, "appspot.com") {

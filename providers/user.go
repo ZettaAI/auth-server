@@ -17,7 +17,8 @@ type User struct {
 	UpdatedAt []uint8
 }
 
-func addUser(email string, name string) {
+// AddUser ass new user to DB
+func AddUser(email string, name string) {
 	db, err := gorm.Open(mysql.Open(os.Getenv("USER_DB_STRING")), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Could not connect to DB server: %v", err.Error())
